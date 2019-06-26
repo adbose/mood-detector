@@ -1,15 +1,18 @@
-
+from string import punctuation
 positive_keywords = ["great", "happy", "amazing", "fantastic", "like", "love", "good", "awesome", "cool", "best",
                      "exciting"]
 negative_keywords = ["disgusting", "boring", "sad", "depressing", "hate", "shit", "bad", "terrible", "horrible",
                      "annoying", "worst"]
 
 
-# sample_sentence = "I am happy about being sad"
+# sample_sentence = "I am happy about being sad."
 def analyse_mood(expression):
+    expression = ''.join(c for c in expression if c not in punctuation)
     words = expression.strip().lower().split()
+
     positive_mood_counter = 0
     negative_mood_counter = 0
+    mood = 'Positive'
     for word in words:
         if word in positive_keywords:
             positive_mood_counter += 1
@@ -19,9 +22,11 @@ def analyse_mood(expression):
             continue
 
     if positive_mood_counter >= negative_mood_counter:
-        return 'positive'
+        mood = 'Positive'
     else:
-        return 'negative'
+        mood = 'Negative'
+
+    return mood
 
 
 # testing the file standalone
