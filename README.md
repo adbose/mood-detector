@@ -1,2 +1,2 @@
 # mood-detector
-Different ways to detect mood from texts in Python
+Different ways of sentiment analysis  in Python to detect mood as positive or negative from texts.
