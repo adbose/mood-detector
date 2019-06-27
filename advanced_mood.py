@@ -19,12 +19,13 @@ class Splitter(object):
             [['this', 'is', 'a', 'sentence', '.'], ['This', 'is', 'another', 'one', '.']]
         """
 
-        print('Converting the text into list of sentences...')
+        print('\nConverting the text into list of sentences...')
         sentences_list = self.nltk_sentences_splitter.tokenize(text)
         print(sentences_list)
 
+        print('\nTransforming the list of sentences so that each sentence is a list of tokens...')
         tokenized_text = [self.nltk_tokenizer.tokenize(sentence.lower()) for sentence in sentences_list]
-        print('Converting the list of sentences into list of sentences, where each sentence is a list of tokens...')
+        print(tokenized_text)
 
         return tokenized_text
 
@@ -44,11 +45,12 @@ class PosTagger(object):
         """
 
         lemmatizer = WordNetLemmatizer()
-
+        print('\nConverting the tokenised text into POS tagged object...')
         pos_tagged_text_list = [nltk.pos_tag(each_sentence_list) for each_sentence_list in tokenized_text]
         # convert it into [(word, lemma, [tags]), (.,.,[.]), ...]
         pos_tagged_word_lemma_text_list = [[(word, lemmatizer.lemmatize(word), [postag]) for (word, postag) in sentence]
                                            for sentence in pos_tagged_text_list]
+        print(pos_tagged_word_lemma_text_list)
 
         return pos_tagged_word_lemma_text_list
 
@@ -71,6 +73,7 @@ class DictionaryTagger(object):
                     self.max_key_size = max(self.max_key_size, len(key))
 
     def tag(self, pos_tagged_text):  # after entire preprocessing pipeline
+
         return [self.tag_sentence(sentence) for sentence in pos_tagged_text]  # sentence in the form of list of tokens
 
     def tag_sentence(self, sentence, tag_with_lemmas=False):
@@ -118,30 +121,63 @@ class DictionaryTagger(object):
         return tagged_sentence
 
 
+# separate helper function to preprocess input text into pos tagged object of the input text
 def postag(text):
 
     splitter = Splitter()
     postagger = PosTagger()
 
     tokenized_text = splitter.split(text)
-    print(tokenized_text)
-
     pos_tagged_sentences = postagger.pos_tag(tokenized_text)
-    print(pos_tagged_sentences)
 
     return pos_tagged_sentences
 
 
+# function to add sentiment tag to pos tagged object of the input text
+def dicttag(pos_tagged_text):
+    dicttagger = DictionaryTagger(['dicts/positive.yml', 'dicts/negative.yml', 'dicts/inc.yml', 'dicts/dec.yml'])
+
+    return dicttagger.tag(pos_tagged_text)
+
+
+# separate helper function to return a positive, negative or 0 based on the sentiment being positive or negative
+# used by the sentiment_score method used to find the final value of the calculated sentiment
 def value_of(sentiment):
     if sentiment == 'positive':
         return 1
     if sentiment == 'negative':
         return -1
+
     return 0
 
 
+# called by the driver function to calculate the sentiment based on positive and negative keywords
 def sentiment_score(dict_tagged_sentences):
     return sum([value_of(tag) for sentence in dict_tagged_sentences for token in sentence for tag in token[2]])
+
+
+# calculating score taking into account degree of positive and negative keywords
+def sentence_score(sentence_tokens, previous_token, acum_score):
+    if not sentence_tokens:
+        return acum_score
+    else:
+        current_token = sentence_tokens[0]
+        tags = current_token[2]
+        token_score = sum([value_of(tag) for tag in tags])
+        if previous_token is not None:
+            previous_tags = previous_token[2]
+            if 'inc' in previous_tags:
+                token_score *= 2.0
+            elif 'dec' in previous_tags:
+                token_score /= 2.0
+            elif 'inv' in previous_tags:
+                token_score *= -1.0
+        return sentence_score(sentence_tokens[1:], current_token, acum_score + token_score)
+
+
+# called by the driver function to calculate the sentiment based on weight of dictionary keywords
+def sentiment_score2(review):
+    return sum([sentence_score(sentence, None, 0.0) for sentence in review])
 
 
 # main driver code
@@ -156,17 +192,18 @@ def main():
             to avoid.
            """
     print('The original text is...\n', text)
-    preprocessed_text = postag(text)
-    print('The pre-processed tokenized and tagged text is...')
-    print(preprocessed_text)
-    dicttagger = DictionaryTagger(['dicts/positive.yml', 'dicts/negative.yml'])
 
-    dict_tagged_sentences = dicttagger.tag(preprocessed_text)
-    print('The preprocessed, tokenized and dictionary tagged text is...')
-    print(dict_tagged_sentences)
-    print(sentiment_score(dict_tagged_sentences))
+    pos_tagged_text = postag(text)
+
+    dict_tagged_text = dicttag(pos_tagged_text)
+    print('\nThe preprocessed, tokenized and dictionary tagged text is...')
+    print(dict_tagged_text)
+
+    print('\nBasic keyword based sentiment score: ', sentiment_score(dict_tagged_text))
     # We accept this score because it's the net sum of positive and negative scores. A net positive score can be
     # considered positive
+    print('\nSentiment score of dictionary tagged with weights and inverse on keywords: ',
+          sentiment_score2(dict_tagged_text))
 
 
 if __name__ == '__main__':
