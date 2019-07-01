@@ -76,7 +76,7 @@ class DictionaryTagger(object):
 
         return [self.tag_sentence(sentence) for sentence in pos_tagged_text]  # sentence in the form of list of tokens
 
-    def tag_sentence(self, sentence, tag_with_lemmas=False):
+    def tag_sentence(self, sentence, tag_with_lemmas=True):
         """
             The result is only one tagging of all the possible ones.
             The resulting tagging is determined by these two priority rules:
@@ -152,7 +152,7 @@ def value_of(sentiment):
 
 
 # called by the driver function to calculate the sentiment based on positive and negative keywords
-def sentiment_score(dict_tagged_sentences):
+def get_sentiment_score(dict_tagged_sentences):
     return sum([value_of(tag) for sentence in dict_tagged_sentences for token in sentence for tag in token[2]])
 
 
@@ -176,7 +176,7 @@ def sentence_score(sentence_tokens, previous_token, acum_score):
 
 
 # called by the driver function to calculate the sentiment based on weight of dictionary keywords
-def sentiment_score2(review):
+def get_sentiment_score2(review):
     return sum([sentence_score(sentence, None, 0.0) for sentence in review])
 
 
@@ -199,11 +199,11 @@ def main():
     print('\nThe preprocessed, tokenized and dictionary tagged text is...')
     print(dict_tagged_text)
 
-    print('\nBasic keyword based sentiment score: ', sentiment_score(dict_tagged_text))
+    print('\nBasic keyword based sentiment score: ', get_sentiment_score(dict_tagged_text))
     # We accept this score because it's the net sum of positive and negative scores. A net positive score can be
     # considered positive
     print('\nSentiment score of dictionary tagged with weights and inverse on keywords: ',
-          sentiment_score2(dict_tagged_text))
+          get_sentiment_score2(dict_tagged_text))
 
 
 if __name__ == '__main__':
