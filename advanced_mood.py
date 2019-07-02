@@ -65,6 +65,7 @@ class DictionaryTagger(object):
         self.max_key_size = 0
 
         for current_dict in dictionaries:  # dictionary format {keyword : [positive], ...}
+            print('Current Dictionary...\n', current_dict)
             for key in current_dict:
                 if key in self.dictionary:  # i.e. if key in dictionary object keys...
                     self.dictionary[key].extend(current_dict[key])
@@ -76,7 +77,7 @@ class DictionaryTagger(object):
 
         return [self.tag_sentence(sentence) for sentence in pos_tagged_text]  # sentence in the form of list of tokens
 
-    def tag_sentence(self, sentence, tag_with_lemmas=True):
+    def tag_sentence(self, sentence, tag_with_lemmas=False):
         """
             The result is only one tagging of all the possible ones.
             The resulting tagging is determined by these two priority rules:
