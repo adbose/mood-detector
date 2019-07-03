@@ -136,7 +136,8 @@ def postag(text):
 
 # function to add sentiment tag to pos tagged object of the input text
 def dicttag(pos_tagged_text):
-    dicttagger = DictionaryTagger(['dicts/positive.yml', 'dicts/negative.yml', 'dicts/inc.yml', 'dicts/dec.yml'])
+    dicttagger = DictionaryTagger(['dicts/positive.yml', 'dicts/negative.yml', 'dicts/inc.yml',
+                                   'dicts/dec.yml', 'dicts/inv.yml'])
 
     return dicttagger.tag(pos_tagged_text)
 
@@ -162,10 +163,10 @@ def sentence_score(sentence_tokens, previous_token, acum_score):
     if not sentence_tokens:
         return acum_score
     else:
-        current_token = sentence_tokens[0]
-        tags = current_token[2]
+        current_token = sentence_tokens[0]  # each token is a tuple in the form (word, lemma, [tags])
+        tags = current_token[2]  # as we know the tags are a list
         token_score = sum([value_of(tag) for tag in tags])
-        if previous_token is not None:
+        if token_score != 0 and previous_token is not None:
             previous_tags = previous_token[2]
             if 'inc' in previous_tags:
                 token_score *= 2.0
@@ -177,8 +178,9 @@ def sentence_score(sentence_tokens, previous_token, acum_score):
 
 
 # called by the driver function to calculate the sentiment based on weight of dictionary keywords
-def get_sentiment_score2(review):
-    return sum([sentence_score(sentence, None, 0.0) for sentence in review])
+def get_sentiment_score2(dict_tagged_sentences):
+    print('Getting the sentiment score for dict tagged and tokenized text...', dict_tagged_sentences)
+    return sum([sentence_score(sentence, None, 0.0) for sentence in dict_tagged_sentences])
 
 
 # main driver code
@@ -209,18 +211,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
